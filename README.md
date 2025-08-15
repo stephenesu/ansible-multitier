@@ -53,7 +53,3 @@ This ensures that secret keys remain secure while deploying your infrastructure.
 ```bash
 ansible-playbook playbook.yml --ask-vault-pass
 ```
-
-This will provision and configure all three tiers automatically.
-
-If you want, I can also **add a small diagram showing the flow: Webserver → Appserver → Database** to make it visually clear. This is especially helpful for documentation or sharing with others. Do you want me to add that?
