@@ -27,6 +27,8 @@ ansible-multitier/
     └── webserver
 ```
 
+---
+
 # Securing Secrets
 
 Sensitive information such as database passwords or API keys is stored in **Vault-encrypted variable files** in `group_vars`.
@@ -45,7 +47,9 @@ ansible-playbook playbook.yml --ask-vault-pass
 
 This ensures that secret keys remain secure while deploying your infrastructure.
 
-## Running the Project
+---
+
+# Running the Project
 
 1. Update `inventory.ini` to reflect the IP addresses of your webserver, appserver, and database server.
 2. Execute the main playbook, providing the Vault password for encrypted variables:
@@ -53,3 +57,62 @@ This ensures that secret keys remain secure while deploying your infrastructure.
 ```bash
 ansible-playbook playbook.yml --ask-vault-pass
 ```
+
+---
+
+# Code Quality with ansible-lint
+
+We use **ansible-lint** to ensure playbooks and roles follow best practices and maintainable standards.
+
+Run:
+
+```bash
+ansible-lint
+```
+
+Configuration (`.ansible-lint.yml`) includes:
+
+```yaml
+skip_list:
+  - experimental
+  - risky-file-permissions
+
+exclude_paths:
+  - collections/
+  - roles/geerlingguy.apache
+  - roles/geerlingguy.php
+  - "**/meta/**"
+  - "**/test/**"
+```
+
+---
+
+# Role Testing with Molecule
+
+We use **Molecule** with **Podman** to perform functional testing of roles.
+
+### Run tests for a role:
+
+```bash
+cd roles/appserver
+molecule test
+```
+
+The Molecule workflow includes:
+
+* **Dependency installation**
+* **Syntax checks**
+* **Role deployment (Converge)**
+* **Idempotence verification**
+* **HTTP endpoint verification** using `ansible.builtin.uri`
+
+Example verification (`molecule/default/verify.yml`):
+
+```yaml
+- name: Verify app is running
+  hosts: all
+  tasks:
+    - name: Check Node.js app HTTP response
+      ansible.builtin.uri:
+        url: http://localhost:3000
+        status_code: 200
