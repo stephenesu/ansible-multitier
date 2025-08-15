@@ -2,9 +2,11 @@
 skip_list:
   - experimental               # optional, skip experimental rules
   - risky-file-permissions     # optional, if you don't care about that warning
+  - role-name                  # skip role name galaxy requirement checks
 
 exclude_paths:
   - collections/               # ignore all Galaxy collections
   - roles/geerlingguy.apache
   - roles/geerlingguy.php
   - "**/meta/**"               # ignore all meta directories in all roles
+  - "**/test/**"               # ignore all test directories in all roles

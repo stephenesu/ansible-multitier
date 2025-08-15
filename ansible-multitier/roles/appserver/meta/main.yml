@@ -1,9 +1,11 @@
 galaxy_info:
-  author: Stephen Esu         
+  role_name: appserver
+  namespace: uniccon_group
+  author: Stephen Esu
   description: App server role for multitier deployment
-  company: UnicconGroup of Companies  
-  license: MIT                
-  min_ansible_version: "2.1" # ✅ Fix schema error — must be a string
+  company: UnicconGroup of Companies
+  license: MIT
+  min_ansible_version: "2.1"
   platforms:
     - name: EL
       versions:
