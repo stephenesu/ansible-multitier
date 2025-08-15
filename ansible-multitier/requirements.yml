@@ -3,8 +3,6 @@ roles:
    - name: geerlingguy.apache
    - name: geerlingguy.php
 
-
-
 collections:
    - name: community.general
    - name: ansible.posix

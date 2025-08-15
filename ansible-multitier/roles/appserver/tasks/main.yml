@@ -8,9 +8,14 @@
       - curl
     state: present
 
-- name: Add NodeSource repository
-  ansible.builtin.shell: |
-    curl -sL https://rpm.nodesource.com/setup_{{ node_version }} | bash -
+- name: Download NodeSource setup script
+  ansible.builtin.get_url:
+    url: "https://rpm.nodesource.com/setup_{{ node_version }}"
+    dest: /tmp/nodesource_setup.sh
+    mode: '0755'
+
+- name: Run NodeSource setup script
+  ansible.builtin.command: /tmp/nodesource_setup.sh
   args:
     creates: /etc/yum.repos.d/nodesource*.repo
 
@@ -23,9 +28,9 @@
   ansible.builtin.user:
     name: "{{ app_user }}"
     home: "{{ app_dir }}"
-    create_home: yes
+    create_home: true
 
-# === Fix for clone step ===
+# === Git setup ===
 - name: Check if app dir is a git repo
   ansible.builtin.stat:
     path: "{{ app_dir }}/.git"
@@ -52,9 +57,9 @@
   ansible.builtin.git:
     repo: "{{ app_repo }}"
     dest: "{{ app_dir }}"
-    version: HEAD
-    update: yes
-    force: yes
+    version: main   # changed from HEAD
+    update: true
+    force: true
   become: true
   become_user: "{{ app_user }}"
 
@@ -67,17 +72,10 @@
     mode: '0700'
   become: true
 
-# Install Node.js dependencies as app user
 - name: Install app dependencies
   community.general.npm:
     path: "{{ app_dir }}"
   become: true
-  become_user: "{{ app_user }}"
-# ===========================
-
-- name: Install app dependencies
-  community.general.npm:
-    path: "{{ app_dir }}"
   become_user: "{{ app_user }}"
 
 - name: Create systemd service for Node app
@@ -97,10 +95,12 @@
 
       [Install]
       WantedBy=multi-user.target
+  become: true
 
 - name: Reload systemd and start Node app
   ansible.builtin.systemd:
     name: nodeapp
-    enabled: yes
+    enabled: true
     state: started
-    daemon_reload: yes
+    daemon_reload: true
+  become: true
