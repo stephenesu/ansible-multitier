@@ -1,0 +1,23 @@
+---
+- name: Configure a full-stack application
+  hosts: all
+  become: true
+  serial: 1
+
+- name: Configure Apache webserver
+  hosts: webserver
+  become: true
+  roles:
+    - webserver
+
+- name: Configure appserver using Node.js
+  hosts: appserver
+  become: true
+  roles:
+    - appserver
+
+- name: Configure database server
+  hosts: database
+  become: true
+  roles:
+    - database

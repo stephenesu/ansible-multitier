@@ -1,0 +1,7 @@
+---
+# vars file for roles/webserver
+web_server_pkg: httpd
+document_root: /var/www/html
+site_index: index.html
+
+

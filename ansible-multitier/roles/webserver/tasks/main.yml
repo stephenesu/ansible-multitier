@@ -1,0 +1,27 @@
+---
+- name: Install Apache
+  ansible.builtin.yum:
+    name: httpd
+    state: present
+
+- name: Configure Apache as reverse proxy
+  ansible.builtin.copy:
+    dest: /etc/httpd/conf.d/nodeapp.conf
+    content: |
+      <VirtualHost *:80>
+          ProxyPreserveHost On
+          ProxyPass / http://{{ hostvars[groups['appserver'][0]].ansible_host }}:3000/
+          ProxyPassReverse / http://{{ hostvars[groups['appserver'][0]].ansible_host }}:3000/
+      </VirtualHost>
+
+- name: Enable proxy modules
+  ansible.builtin.shell: |
+    sed -i 's/^#\(LoadModule proxy_module modules\/mod_proxy.so\)/\1/' /etc/httpd/conf/httpd.conf
+    sed -i 's/^#\(LoadModule proxy_http_module modules\/mod_proxy_http.so\)/\1/' /etc/httpd/conf/httpd.conf
+
+- name: Start and enable Apache
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: yes
+

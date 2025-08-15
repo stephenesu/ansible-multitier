@@ -1,0 +1,5 @@
+---
+app_user: nodeapp
+app_dir: /opt/nodeapp
+app_repo: "https://github.com/sawolabs/nodejs-sample-app.git"
+node_version: "18.x"

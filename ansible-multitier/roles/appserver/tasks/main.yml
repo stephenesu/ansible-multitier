@@ -1,0 +1,106 @@
+---
+- name: Install prerequisites
+  ansible.builtin.yum:
+    name:
+      - gcc-c++
+      - make
+      - git
+      - curl
+    state: present
+
+- name: Add NodeSource repository
+  ansible.builtin.shell: |
+    curl -sL https://rpm.nodesource.com/setup_{{ node_version }} | bash -
+  args:
+    creates: /etc/yum.repos.d/nodesource*.repo
+
+- name: Install Node.js
+  ansible.builtin.yum:
+    name: nodejs
+    state: present
+
+- name: Create app user
+  ansible.builtin.user:
+    name: "{{ app_user }}"
+    home: "{{ app_dir }}"
+    create_home: yes
+
+# === Fix for clone step ===
+- name: Check if app dir is a git repo
+  ansible.builtin.stat:
+    path: "{{ app_dir }}/.git"
+  register: git_repo
+  become: true
+
+- name: Remove existing app dir if not a git repo
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: absent
+  when: not git_repo.stat.exists
+  become: true
+
+- name: Ensure app directory exists with correct ownership
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0755'
+  become: true
+
+- name: Clone or update application repository as app user
+  ansible.builtin.git:
+    repo: "{{ app_repo }}"
+    dest: "{{ app_dir }}"
+    version: HEAD
+    update: yes
+    force: yes
+  become: true
+  become_user: "{{ app_user }}"
+
+- name: Ensure Ansible remote_tmp dir exists for nodeapp
+  ansible.builtin.file:
+    path: "/tmp/.ansible-{{ app_user }}/tmp"
+    state: directory
+    owner: "{{ app_user }}"
+    group: "{{ app_user }}"
+    mode: '0700'
+  become: true
+
+# Install Node.js dependencies as app user
+- name: Install app dependencies
+  community.general.npm:
+    path: "{{ app_dir }}"
+  become: true
+  become_user: "{{ app_user }}"
+# ===========================
+
+- name: Install app dependencies
+  community.general.npm:
+    path: "{{ app_dir }}"
+  become_user: "{{ app_user }}"
+
+- name: Create systemd service for Node app
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/nodeapp.service
+    content: |
+      [Unit]
+      Description=Node.js App
+      After=network.target
+
+      [Service]
+      ExecStart=/usr/bin/node {{ app_dir }}/index.js
+      Restart=always
+      User={{ app_user }}
+      Environment=PORT=3000
+      WorkingDirectory={{ app_dir }}
+
+      [Install]
+      WantedBy=multi-user.target
+
+- name: Reload systemd and start Node app
+  ansible.builtin.systemd:
+    name: nodeapp
+    enabled: yes
+    state: started
+    daemon_reload: yes
